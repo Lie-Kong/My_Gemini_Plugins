@@ -35,6 +35,7 @@ def download_image(url, path):
 def partition(message):
     z=0
     a=[]
+    b=[]
     for i in message:
         temp=str(i).strip('[]').split(',')
         if temp[0]=='CQ:image':
@@ -42,13 +43,13 @@ def partition(message):
             path=download_image(url, where+timestamp+'.jpg')
             img = PIL.Image.open(path)
             a.append(img)
+            b.append(path)
         else:
             i=str(i)
             if z==0:i=i[1:]
             a.append(i)
-            path=None
         z+=1
-    return [a,path]
+    return [a,b]
 
 
 @clean.handle()
@@ -74,7 +75,7 @@ async def walf_handle(bot:Bot,event:Event, args: Message = CommandArg()):
         try:
             with open(where+user,'r') as file:
                 history=file.read()
-            message=eval(history)
+            message=eval(history)[-5*2:]
         except:
             message=[]
         a=partition(a)
@@ -82,8 +83,10 @@ async def walf_handle(bot:Bot,event:Event, args: Message = CommandArg()):
         a=a[0]
         message.append({'role':'user','parts': a})
         temp = await sy_chat(message)
-        if path !=None:
-            await aiofiles.os.remove(path)
+        try:
+            for i in path:await aiofiles.os.remove(i)
+        except:
+            pass
         message.append({'role':'model',
                         'parts':[temp]})
         with open(where+user,'w') as file:
