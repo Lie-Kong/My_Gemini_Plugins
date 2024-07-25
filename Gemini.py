@@ -1,4 +1,4 @@
-import markdown,re,os,traceback,requests,time,PIL.Image,aiofiles.os
+import markdown,re,os,traceback,requests,html,time,PIL.Image,aiofiles.os
 from nonebot.utils import run_sync
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from nonebot import on_command
@@ -26,11 +26,15 @@ def sy_chat(message):
     return model.generate_content(message).text
 
 def download_image(url, path):
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(path, 'wb') as f:
-            f.write(response.content)
+    t=-8
+    while t<0:
+        t+=1
+        response = requests.get(url,headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"})
+        if response.status_code == 200:
+            with open(path, 'wb') as f:
+                f.write(response.content)
             return path
+        time.sleep(1)
 
 def partition(message):
     z=0
@@ -39,8 +43,8 @@ def partition(message):
     for i in message:
         temp=str(i).strip('[]').split(',')
         if temp[0]=='CQ:image':
-            url=temp[1][5:]
-            path=download_image(url, where+timestamp+'.jpg')
+            url=html.unescape(temp[1][5:])
+            path=download_image(url, where+timestamp)
             img = PIL.Image.open(path)
             a.append(img)
             b.append(path)
